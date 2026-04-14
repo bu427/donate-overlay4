@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>Donation Overlay with Slip</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { margin: 0; background: transparent; overflow: hidden; font-family: 'Kanit', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        
+        #donation-alert {
+            display: none; background: rgba(20, 20, 20, 0.9); border: 3px solid #fe2c55; box-shadow: 0 0 20px rgba(37, 244, 238, 0.5);
+            width: 400px; padding: 25px; border-radius: 20px; text-align: center; color: white;
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        .donor-info { font-size: 24px; font-weight: bold; color: #fff; margin-bottom: 10px; }
+        .donor-name { color: #25f4ee; }
+        .donation-amount { font-size: 36px; color: #fe2c55; font-weight: bold; margin-bottom: 15px; }
+        .donor-message { font-size: 18px; color: #ddd; background: rgba(255, 255, 255, 0.1); padding: 10px; border-radius: 10px; margin-bottom: 20px; font-style: italic; }
+    </style>
+</head>
+<body>
+
+    <div id="donation-alert">
+        <div class="donor-info"><span class="donor-name" id="name">ผู้โดเนท</span> ได้โดเนท</div>
+        <div class="donation-amount" id="amount">฿0</div>
+        <div class="donor-message" id="message">"ข้อความจากผู้โดเนท..."</div>
+    </div>
+
+    <audio id="alert-sound" src="C:\Users\ds427\OneDrive\เดสก์ท็อป\2026-04-14-16-42-52.mp3"></audio>
+
+    <script>
+        // วาง URL ของ Google Apps Script Web App ที่ก๊อปปี้มาตรงนี้
+        const webAppUrl = 'https://script.google.com/macros/s/AKfycbwohEIR-t-_-1-yfRBzKM4WNEldY3AtVWwKQNUt8vSeqp-g7D2OnlCrediQFAKRQUis/exec'; 
+        let lastTimestamp = 0;
+
+        async function checkDonations() {
+            try {
+                const response = await fetch(webAppUrl);
+                const data = await response.json();
+
+                // ตรวจสอบว่าเป็นข้อมูลใหม่หรือไม่ (ถ้าไม่มี Timestamp ให้อ้างอิง ก็อาจจะต้องใช้หลักการเปรียบเทียบข้อมูลทั้งหมดแทน)
+                if (data.name && JSON.stringify(data) !== localStorage.getItem('lastDonation')) {
+                    showDonation(data);
+                    localStorage.setItem('lastDonation', JSON.stringify(data));
+                }
+            } catch (error) { console.error("Error fetching donation:", error); }
+        }
+
+        function showDonation(data) {
+            document.getElementById('name').innerText = data.name;
+            document.getElementById('amount').innerText = "฿" + data.amount;
+            document.getElementById('message').innerText = `"${data.message}"`;
+            document.getElementById('slip').src = data.slipUrl;
+            
+            // แสดงหน้าต่างแจ้งเตือนและเล่นเสียง
+            const alertBox = document.getElementById('donation-alert');
+            alertBox.style.display = 'block';
+            document.getElementById('alert-sound').play();
+
+            // ซ่อนหน้าต่างแจ้งเตือนหลังจาก 10 วินาที
+            setTimeout(() => { alertBox.style.display = 'none'; }, 10000); 
+        }
+
+        // เช็คข้อมูลใหม่ทุกๆ 10 วินาที (ไม่ควรเช็คบ่อยเกินไปเพื่อป้องกัน Error)
+        setInterval(checkDonations, 10000);
+        checkDonations(); // เช็คทันทีที่โหลดหน้า
+    </script>
+</body>
+</html>
