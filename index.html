@@ -1,86 +1,35 @@
 <!DOCTYPE html>
-<html lang="th">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@700&display=swap" rel="stylesheet">
     <style>
-        body {
-            margin: 0;
-            overflow: hidden;
-            background-color: transparent;
-            font-family: 'Kanit', sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-
-        #donate-card {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            background: rgba(0, 0, 0, 0.7);
-            border: 2px solid #fe2c55; /* สีชมพู TikTok */
-            box-shadow: 0 0 15px #25f4ee; /* สีฟ้า TikTok */
-            padding: 15px 30px;
-            border-radius: 50px;
-            color: white;
-            min-width: 250px;
-            text-align: center;
-            transform: scale(0);
-            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        .show { transform: scale(1) !important; }
-
-        .label { font-size: 14px; color: #25f4ee; text-transform: uppercase; letter-spacing: 1px; }
-        .name { font-size: 28px; color: #ffffff; margin: 2px 0; }
-        .amount { font-size: 32px; color: #fe2c55; }
+        body { margin: 0; background: transparent; display: flex; justify-content: center; align-items: center; height: 100vh; font-family: sans-serif; }
+        #alert { display: none; background: rgba(0,0,0,0.8); color: white; padding: 20px; border-radius: 15px; border: 3px solid #ffcc00; text-align: center; }
     </style>
 </head>
 <body>
 
-    <div id="donate-card">
-        <div class="label">Latest Donation</div>
-        <div class="name" id="user-name">---</div>
-        <div class="amount" id="user-amount">฿0</div>
-    </div>
+<div id="alert">
+    <h1 id="name">...</h1>
+    <h2 id="amount">...</h2>
+</div>
 
-    <script>
-        // แทนที่ด้วยลิงก์ CSV จาก Google Sheets ของคุณ
-        const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRU8uL7yDtj-tUEluvGndvQbS0FIXXFTxyM24atiP7Uj25ENsy2CwdgnXBSHEb3h0OOSVFA5gB3ySsw/pub?output=csv';
-        let lastData = "";
+<audio id="sound" src="C:\Users\ds427\OneDrive\เดสก์ท็อป\2026-04-14-16-42-52.mp3"></audio> <script>
+    const webAppUrl = 'https://script.google.com/macros/s/AKfycbwBPM9I78PYeFJa1NTjlwUg7sMdofFTd3Kj8NqLrx7dzCRthKiOA-fBc-HOPp7FLBmH/exec';
+    let lastData = "";
 
-        async function checkSheet() {
-            try {
-                const response = await fetch(sheetUrl + '?t=' + new Date().getTime()); // ป้องกัน Cache
-                const text = await response.text();
-                const rows = text.split('\n').map(row => row.split(','));
-                
-                const lastRow = rows[rows.length - 1];
-                const name = lastRow[0];
-                const amount = lastRow[1];
-
-                if (name + amount !== lastData && name !== undefined) {
-                    showPopup(name, amount);
-                    lastData = name + amount;
-                }
-            } catch (e) { console.error("Error:", e); }
+    async function check() {
+        const res = await fetch(webAppUrl);
+        const data = await res.json();
+        if (data.name + data.amount !== lastData) {
+            document.getElementById('name').innerText = data.name;
+            document.getElementById('amount').innerText = "โดเนท: " + data.amount + " บาท";
+            document.getElementById('alert').style.display = 'block';
+            document.getElementById('sound').play();
+            setTimeout(() => { document.getElementById('alert').style.display = 'none'; }, 8000);
+            lastData = data.name + data.amount;
         }
-
-        function showPopup(name, amount) {
-            const card = document.getElementById('donate-card');
-            document.getElementById('user-name').innerText = name;
-            document.getElementById('user-amount').innerText = "฿" + amount;
-            
-            card.classList.add('show');
-            
-            // แสดงค้างไว้ 10 วินาทีแล้วค่อยซ่อน (หรือเอาบรรทัดล่างออกถ้าจะให้โชว์ตลอด)
-            // setTimeout(() => { card.classList.remove('show'); }, 10000);
-        }
-
-        setInterval(checkSheet, 5000); // เช็คทุก 5 วินาที
-        checkSheet();
-    </script>
+    }
+    setInterval(check, 5000);
+</script>
 </body>
 </html>
